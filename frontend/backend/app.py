@@ -4,12 +4,17 @@ import time
 import base64
 import numpy as np
 from PIL import Image
+from typing import Optional, Dict
+
+# Suppress verbose TensorFlow C++ logging
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+
+import tensorflow as tf
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Optional, Dict
 
-app = FastAPI(title="EcoSort AI - Household Waste Classification API")
+app = FastAPI(title="EcoSort AI - Household Waste Classification API (TensorFlow Native)")
 
 # Enable CORS for React/Vite development server
 app.add_middleware(
@@ -58,88 +63,52 @@ MODEL_CONFIGS = {
     }
 }
 
-# Optional TensorFlow loader with graceful fallback
-TF_AVAILABLE = False
-H5_AVAILABLE = False
-loaded_models = {}
-np_cnn_weights = None
+# Cache for loaded TensorFlow Keras models
+loaded_models: Dict[str, tf.keras.Model] = {}
 
-try:
-    import tensorflow as tf
-    TF_AVAILABLE = True
-    print("[INFO] TensorFlow detected. Native model execution enabled.")
-except ImportError:
-    print("[INFO] Running in lightweight mode (TensorFlow not installed locally).")
-
-try:
-    import h5py
-    import zipfile
-    H5_AVAILABLE = True
-except ImportError:
-    pass
+def get_model_abs_path(rel_path: str) -> str:
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), rel_path))
 
 def check_model_on_disk(rel_path: str) -> bool:
-    abs_path = os.path.abspath(os.path.join(os.path.dirname(__file__), rel_path))
-    return os.path.exists(abs_path)
+    return os.path.exists(get_model_abs_path(rel_path))
 
-def load_numpy_cnn_weights(keras_path: str):
-    global np_cnn_weights
-    if np_cnn_weights is not None:
-        return np_cnn_weights
+def get_or_load_tf_model(model_id: str) -> Optional[tf.keras.Model]:
+    """Loads and caches TensorFlow model from disk."""
+    if model_id in loaded_models:
+        return loaded_models[model_id]
+    
+    if model_id not in MODEL_CONFIGS:
+        return None
+        
+    file_rel = MODEL_CONFIGS[model_id]["file"]
+    abs_path = get_model_abs_path(file_rel)
+    
+    if not os.path.exists(abs_path):
+        return None
+        
     try:
-        abs_p = os.path.abspath(os.path.join(os.path.dirname(__file__), keras_path))
-        with zipfile.ZipFile(abs_p, "r") as z:
-            f = h5py.File(io.BytesIO(z.read("model.weights.h5")), "r")
-            w = {}
-            for c, bn in [
-                ("conv2d", "batch_normalization"),
-                ("conv2d_1", "batch_normalization_1"),
-                ("conv2d_2", "batch_normalization_2"),
-                ("conv2d_3", "batch_normalization_3")
-            ]:
-                W_conv = np.array(f[f"layers/{c}/vars/0"], dtype=np.float32)
-                b_conv = np.array(f[f"layers/{c}/vars/1"], dtype=np.float32)
-                gamma = np.array(f[f"layers/{bn}/vars/0"], dtype=np.float32)
-                beta = np.array(f[f"layers/{bn}/vars/1"], dtype=np.float32)
-                mean = np.array(f[f"layers/{bn}/vars/2"], dtype=np.float32)
-                var = np.array(f[f"layers/{bn}/vars/3"], dtype=np.float32)
-                scale = gamma / np.sqrt(var + 0.001)
-                w[c] = (W_conv * scale, (b_conv - mean) * scale + beta)
-            w["dense"] = (
-                np.array(f["layers/dense/vars/0"], dtype=np.float32),
-                np.array(f["layers/dense/vars/1"], dtype=np.float32)
-            )
-            w["dense_1"] = (
-                np.array(f["layers/dense_1/vars/0"], dtype=np.float32),
-                np.array(f["layers/dense_1/vars/1"], dtype=np.float32)
-            )
-            np_cnn_weights = w
-            return w
+        print(f"[INFO] Loading TensorFlow model: {model_id} from {abs_path}...")
+        model = tf.keras.models.load_model(abs_path)
+        loaded_models[model_id] = model
+        print(f"[SUCCESS] TensorFlow model '{model_id}' loaded successfully.")
+        return model
     except Exception as e:
-        print("[WARN] Failed to load NumPy CNN weights:", e)
+        print(f"[ERROR] Failed to load TensorFlow model '{model_id}': {e}")
         return None
 
-def conv_relu_maxpool(x, W, b):
-    H, W_dim, C_in = x.shape
-    C_out = W.shape[3]
-    x_pad = np.pad(x, ((1, 1), (1, 1), (0, 0)), mode="constant")
-    patches = np.lib.stride_tricks.sliding_window_view(x_pad, (3, 3), axis=(0, 1))
-    patches = np.transpose(patches, (0, 1, 3, 4, 2)).reshape(H * W_dim, 9 * C_in)
-    out = (patches @ W.reshape(9 * C_in, C_out) + b).reshape(H, W_dim, C_out)
-    out = np.maximum(out, 0)
-    return out.reshape(H // 2, 2, W_dim // 2, 2, C_out).max(axis=(1, 3))
-
-def predict_numpy_cnn(img_arr, weights):
-    x = img_arr / 255.0
-    x = conv_relu_maxpool(x, *weights["conv2d"])
-    x = conv_relu_maxpool(x, *weights["conv2d_1"])
-    x = conv_relu_maxpool(x, *weights["conv2d_2"])
-    x = conv_relu_maxpool(x, *weights["conv2d_3"])
-    x = x.mean(axis=(0, 1))
-    x = np.maximum(x @ weights["dense"][0] + weights["dense"][1], 0)
-    logits = x @ weights["dense_1"][0] + weights["dense_1"][1]
-    exp = np.exp(logits - np.max(logits))
-    return exp / exp.sum()
+def preprocess_image_for_model(img_arr: np.ndarray, model_id: str) -> np.ndarray:
+    """Preprocesses a 224x224 RGB image array for the specific model architecture."""
+    batch = np.expand_dims(img_arr.astype(np.float32), axis=0)
+    if model_id == "baseline_cnn":
+        return batch / 255.0
+    elif model_id == "mobilenet_v2":
+        return tf.keras.applications.mobilenet_v2.preprocess_input(batch)
+    elif model_id == "resnet50":
+        return tf.keras.applications.resnet50.preprocess_input(batch)
+    elif model_id == "efficientnet_b0":
+        return tf.keras.applications.efficientnet.preprocess_input(batch)
+    else:
+        return batch / 255.0
 
 def decode_image(data_url_or_base64: str) -> Image.Image:
     if "," in data_url_or_base64:
@@ -156,7 +125,8 @@ class PredictRequest(BaseModel):
 def health_check():
     return {
         "status": "healthy",
-        "tensorflow_available": TF_AVAILABLE,
+        "engine": "TensorFlow Native",
+        "tensorflow_version": tf.__version__,
         "classes": CLASSES
     }
 
@@ -170,7 +140,7 @@ def get_models_status():
             "author": cfg["author"],
             "tag": cfg["tag"],
             "trained": exists,
-            "status": "Ready (Trained weights detected)" if exists else "Pending training"
+            "status": "Ready (TensorFlow model detected)" if exists else "Pending training"
         }
     return status
 
@@ -183,34 +153,15 @@ def predict_single(req: PredictRequest):
 
         m_id = req.model_id if req.model_id in MODEL_CONFIGS else "baseline_cnn"
         is_trained = check_model_on_disk(MODEL_CONFIGS[m_id]["file"])
+        model = get_or_load_tf_model(m_id) if is_trained else None
 
-        # Native TF execution if available
-        if TF_AVAILABLE and is_trained:
-            if m_id not in loaded_models:
-                p = os.path.abspath(os.path.join(os.path.dirname(__file__), MODEL_CONFIGS[m_id]["file"]))
-                loaded_models[m_id] = tf.keras.models.load_model(p)
-            
-            batch = np.expand_dims(img_arr, axis=0)
-            if m_id == "baseline_cnn":
-                batch = batch / 255.0
-            elif m_id == "mobilenet_v2":
-                batch = tf.keras.applications.mobilenet_v2.preprocess_input(batch)
-            
-            preds = loaded_models[m_id].predict(batch, verbose=0)[0]
+        if model is not None:
+            processed_input = preprocess_image_for_model(img_arr, m_id)
+            preds = model.predict(processed_input, verbose=0)[0]
             pred_idx = int(np.argmax(preds))
-            confidence = float(round(preds[pred_idx], 4))
-        elif H5_AVAILABLE and is_trained and m_id == "baseline_cnn":
-            # Fast NumPy CNN execution on real trained weights
-            w = load_numpy_cnn_weights(MODEL_CONFIGS["baseline_cnn"]["file"])
-            if w:
-                probs = predict_numpy_cnn(img_arr, w)
-                pred_idx = int(np.argmax(probs))
-                confidence = float(round(probs[pred_idx], 4))
-            else:
-                mean_rgb = np.mean(img_arr, axis=(0, 1))
-                pred_idx = int(sum(mean_rgb) * 100) % len(CLASSES)
-                confidence = 0.85
+            confidence = float(round(float(preds[pred_idx]), 4))
         else:
+            # Fallback for models whose .keras weights have not yet been generated
             mean_rgb = np.mean(img_arr, axis=(0, 1))
             seed_val = int(sum(mean_rgb) * 100) % len(CLASSES)
             pred_idx = seed_val
@@ -222,7 +173,7 @@ def predict_single(req: PredictRequest):
         return {
             "model_id": m_id,
             "model_name": MODEL_CONFIGS[m_id]["name"],
-            "is_trained": is_trained,
+            "is_trained": is_trained and (model is not None),
             "classId": chosen_class,
             "confidence": confidence,
             "latency": f"{latency_ms}ms",
@@ -242,13 +193,22 @@ def predict_compare_all(req: PredictRequest):
         comparison = {}
         for idx, (m_id, cfg) in enumerate(MODEL_CONFIGS.items()):
             is_trained = check_model_on_disk(cfg["file"])
-            # Feature-aligned deterministic prediction
-            pred_idx = int(sum(mean_rgb) * 100 + (idx * 0.05)) % len(CLASSES)
-            # CNN and MobileNet share high consensus on dominant classes
-            if is_trained:
-                pred_idx = int(sum(mean_rgb) * 100) % len(CLASSES)
+            model = get_or_load_tf_model(m_id) if is_trained else None
 
-            conf = float(round(0.86 + ((mean_rgb[idx % 3] + idx * 2) % 11) / 100.0, 3))
+            if model is not None:
+                m_start = time.time()
+                processed_input = preprocess_image_for_model(img_arr, m_id)
+                preds = model.predict(processed_input, verbose=0)[0]
+                pred_idx = int(np.argmax(preds))
+                conf = float(round(float(preds[pred_idx]), 4))
+                m_lat = f"{round((time.time() - m_start) * 1000, 1)}ms"
+                status_str = "Trained (TensorFlow)"
+            else:
+                pred_idx = int(sum(mean_rgb) * 100 + (idx * 0.05)) % len(CLASSES)
+                conf = float(round(0.86 + ((mean_rgb[idx % 3] + idx * 2) % 11) / 100.0, 3))
+                m_lat = f"{round(18 + idx * 12, 1)}ms"
+                status_str = "Pending weights"
+
             c_name = CLASSES[pred_idx]
             
             comparison[m_id] = {
@@ -256,12 +216,12 @@ def predict_compare_all(req: PredictRequest):
                 "author": cfg["author"],
                 "classId": c_name,
                 "confidence": conf,
-                "is_trained": is_trained,
-                "status": "Trained" if is_trained else "Simulated",
+                "is_trained": is_trained and (model is not None),
+                "status": status_str,
                 "bin": CLASS_GUIDELINES[c_name]["bin"],
                 "binColor": CLASS_GUIDELINES[c_name]["color"],
                 "recyclable": CLASS_GUIDELINES[c_name]["recyclable"],
-                "latency": f"{round(18 + idx * 12, 1)}ms"
+                "latency": m_lat
             }
 
         total_latency = round((time.time() - start_time) * 1000, 1)

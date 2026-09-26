@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <circle cx="256" cy="256" r="256" fill="#64748B"/>
+  <!-- Trash Bags sticking out -->
+  <g transform="translate(130, 25)">
+    <!-- Bag 1 Left -->
+    <path d="M30 110 C20 70, 60 50, 70 80 C80 50, 120 70, 110 110 C100 130, 40 130, 30 110 Z" fill="#334155" stroke="#1E293B" stroke-width="3"/>
+    <circle cx="70" cy="55" r="8" fill="#EF4444"/>
+    <!-- Bag 2 Right -->
+    <path d="M120 115 C110 80, 150 60, 160 85 C170 60, 210 80, 200 115 C190 135, 130 135, 120 115 Z" fill="#475569" stroke="#334155" stroke-width="3"/>
+    <circle cx="160" cy="65" r="8" fill="#EAB308"/>
+    <!-- Crumpled wrappers -->
+    <circle cx="120" cy="125" r="16" fill="#94A3B8"/>
+    <circle cx="90" cy="130" r="14" fill="#CBD5E1"/>
+  </g>
+  <!-- Bin Body -->
+  <path d="M80 180 L120 490 C120 500, 130 505, 140 505 L372 505 C382 505, 392 500, 392 490 L432 180 Z" fill="#334155"/>
+  <!-- Bin Rim -->
+  <rect x="60" y="160" width="392" height="40" rx="10" fill="#1E293B"/>
+  <!-- Bin Text -->
+  <text x="256" y="265" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="52" fill="#FFFFFF" text-anchor="middle" letter-spacing="2">TRASH</text>
+  <!-- Trash Can / Landfill Icon -->
+  <g transform="translate(256, 385) scale(1.1)">
+    <rect x="-24" y="-30" width="48" height="60" rx="6" fill="#94A3B8"/>
+    <rect x="-30" y="-38" width="60" height="10" rx="4" fill="#CBD5E1"/>
+    <line x1="-12" y1="-20" x2="-12" y2="18" stroke="#334155" stroke-width="4" stroke-linecap="round"/>
+    <line x1="0" y1="-20" x2="0" y2="18" stroke="#334155" stroke-width="4" stroke-linecap="round"/>
+    <line x1="12" y1="-20" x2="12" y2="18" stroke="#334155" stroke-width="4" stroke-linecap="round"/>
+  </g>
+</svg>

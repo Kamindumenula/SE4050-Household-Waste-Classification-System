@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <circle cx="256" cy="256" r="256" fill="#48C78E"/>
+  <!-- Paper & Newspaper sticking out -->
+  <g transform="translate(120, 20)">
+    <!-- Paper Sheet Left -->
+    <rect x="20" y="25" width="85" height="125" rx="4" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="3" transform="rotate(-12, 60, 80)"/>
+    <line x1="28" y1="55" x2="75" y2="45" stroke="#94A3B8" stroke-width="4" stroke-linecap="round"/>
+    <line x1="28" y1="75" x2="75" y2="65" stroke="#94A3B8" stroke-width="4" stroke-linecap="round"/>
+    <line x1="28" y1="95" x2="65" y2="85" stroke="#94A3B8" stroke-width="4" stroke-linecap="round"/>
+    <!-- Folded Newspaper Center -->
+    <rect x="105" y="15" width="95" height="135" rx="5" fill="#E2E8F0" stroke="#94A3B8" stroke-width="3" transform="rotate(4, 150, 80)"/>
+    <rect x="117" y="35" width="70" height="30" fill="#94A3B8" rx="2"/>
+    <line x1="117" y1="78" x2="180" y2="78" stroke="#64748B" stroke-width="4"/>
+    <line x1="117" y1="92" x2="180" y2="92" stroke="#64748B" stroke-width="4"/>
+    <!-- Document Right -->
+    <rect x="180" y="35" width="80" height="115" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="3" transform="rotate(18, 220, 90)"/>
+  </g>
+  <!-- Bin Body -->
+  <path d="M80 180 L120 490 C120 500, 130 505, 140 505 L372 505 C382 505, 392 500, 392 490 L432 180 Z" fill="#3B82F6"/>
+  <!-- Bin Rim -->
+  <rect x="60" y="160" width="392" height="40" rx="10" fill="#2563EB"/>
+  <!-- Bin Text -->
+  <text x="256" y="265" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="52" fill="#FFFFFF" text-anchor="middle" letter-spacing="2">PAPER</text>
+  <!-- Recycle Symbol -->
+  <g transform="translate(256, 385) scale(0.95)">
+    <path d="M-45 -55 L-20 -55 L-30 -35 L-15 -35 C5 -35 25 -20 35 0 L20 10 C12 -5 -2 -15 -15 -15 L-30 -15 L-20 5 Z" fill="#FFFFFF"/>
+    <path d="M-45 -55 L-20 -55 L-30 -35 L-15 -35 C5 -35 25 -20 35 0 L20 10 C12 -5 -2 -15 -15 -15 L-30 -15 L-20 5 Z" fill="#FFFFFF" transform="rotate(120)"/>
+    <path d="M-45 -55 L-20 -55 L-30 -35 L-15 -35 C5 -35 25 -20 35 0 L20 10 C12 -5 -2 -15 -15 -15 L-30 -15 L-20 5 Z" fill="#FFFFFF" transform="rotate(240)"/>
+  </g>
+</svg>

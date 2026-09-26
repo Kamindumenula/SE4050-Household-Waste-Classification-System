@@ -176,34 +176,37 @@ export default function CameraScanner({ onCapture, isAnalyzing, liveAutoScan, se
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          marginTop: "16px",
+          marginTop: "14px",
           gap: "10px",
-          flexWrap: "wrap"
+          height: "42px",
+          boxSizing: "border-box"
         }}
       >
         <button
           className="btn btn-secondary"
+          style={{ height: "42px", padding: "0 16px", fontSize: "0.82rem" }}
           onClick={toggleFacingMode}
           disabled={!cameraActive}
         >
-          <RefreshCw size={16} /> Flip View
+          <RefreshCw size={15} /> Flip View
         </button>
 
         <button
           className={`btn ${liveAutoScan ? "btn-primary" : "btn-secondary"}`}
+          style={{ height: "42px", padding: "0 16px", fontSize: "0.82rem" }}
           onClick={() => setLiveAutoScan((prev) => !prev)}
           disabled={!cameraActive}
         >
-          <Zap size={16} /> {liveAutoScan ? "Auto-Scan ON" : "Auto-Scan OFF"}
+          <Zap size={15} /> {liveAutoScan ? "Auto-Scan ON" : "Auto-Scan OFF"}
         </button>
 
         <button
           className="btn btn-primary"
-          style={{ padding: "11px 24px" }}
+          style={{ height: "42px", padding: "0 22px", fontSize: "0.85rem" }}
           onClick={captureFrame}
           disabled={!cameraActive || isAnalyzing}
         >
-          <Camera size={18} />
+          <Camera size={17} />
           {isAnalyzing ? "Classifying..." : "Capture & Scan"}
         </button>
       </div>

@@ -34,7 +34,7 @@ export default function App() {
       .catch(() => {});
   }, []);
 
-  const handleProcessImage = async (dataUrl, presetCategory = null) => {
+  const handleProcessImage = async (dataUrl) => {
     setIsAnalyzing(true);
     setCurrentImagePreview(dataUrl);
 
@@ -76,7 +76,7 @@ export default function App() {
     // Client fallback simulation if backend is offline
     setTimeout(() => {
       const keys = Object.keys(WASTE_CLASSES);
-      const chosenClass = presetCategory || keys[Math.floor(Math.random() * keys.length)];
+      const chosenClass = keys[Math.floor(Math.random() * keys.length)];
 
       if (compareMode) {
         const comp = {};
@@ -192,7 +192,7 @@ export default function App() {
             style={{ padding: "6px 16px", border: "none", fontSize: "0.82rem" }}
             onClick={() => setActiveTab("upload")}
           >
-            <Upload size={15} /> Upload & Presets
+            <Upload size={15} /> Upload
           </button>
         </div>
 

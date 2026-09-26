@@ -110,15 +110,50 @@ h1, h2, h3, h4 {
   cursor: not-allowed;
 }
 
-/* Camera Scanner Viewfinder */
+/* Camera Scanner Viewfinder & Upload Dropzone with identical dimensions */
+.scanner-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
 .scanner-viewport {
   position: relative;
   width: 100%;
-  aspect-ratio: 4 / 3;
+  height: 330px;
   background: #000;
   border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.8);
+  box-sizing: border-box;
+}
+
+.upload-dropzone {
+  position: relative;
+  width: 100%;
+  height: 330px;
+  background: rgba(15, 23, 42, 0.4);
+  border: 2px dashed rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.upload-dropzone:hover {
+  border-color: rgba(16, 185, 129, 0.5);
+  background: rgba(16, 185, 129, 0.04);
+}
+
+.upload-dropzone.drag-active {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.08);
 }
 
 .scanner-video {

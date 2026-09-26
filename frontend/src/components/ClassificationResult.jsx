@@ -130,18 +130,28 @@ export default function ClassificationResult({ result, activeModel }) {
         >
           <div
             style={{
-              width: "38px",
-              height: "38px",
-              borderRadius: "9px",
-              backgroundColor: wasteInfo.binHex,
-              color: "#ffffff",
+              width: "48px",
+              height: "48px",
+              borderRadius: "10px",
+              overflow: "hidden",
+              border: `1.5px solid ${wasteInfo.binHex}`,
+              backgroundColor: "#ffffff",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              flexShrink: 0
+              flexShrink: 0,
+              boxShadow: `0 0 12px ${wasteInfo.badgeBg}`
             }}
           >
-            <Trash2 size={20} />
+            {wasteInfo.binImg ? (
+              <img
+                src={wasteInfo.binImg}
+                alt={`${wasteInfo.binColor} Bin`}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            ) : (
+              <Trash2 size={22} color={wasteInfo.binHex} />
+            )}
           </div>
           <div>
             <div style={{ fontSize: "0.72rem", color: "#94a3b8", fontWeight: 600, textTransform: "uppercase" }}>

@@ -124,9 +124,11 @@ export default function MultiModelCompare({ compareResults, previewImage }) {
                   <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>
                     <span
                       style={{
-                        display: "inline-block",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
                         whiteSpace: "nowrap",
-                        padding: "3px 10px",
+                        padding: "3px 8px",
                         borderRadius: "6px",
                         backgroundColor: "rgba(255, 255, 255, 0.05)",
                         border: `1px solid ${waste.binHex}`,
@@ -136,6 +138,13 @@ export default function MultiModelCompare({ compareResults, previewImage }) {
                         lineHeight: 1.2
                       }}
                     >
+                      {waste.binImg && (
+                        <img
+                          src={waste.binImg}
+                          alt={waste.binColor}
+                          style={{ width: "16px", height: "16px", borderRadius: "3px", objectFit: "cover" }}
+                        />
+                      )}
                       {waste.binColor} Bin
                     </span>
                   </td>

@@ -1,0 +1,3 @@
+Experiment,Best Validation Accuracy,Improvement
+MobileNetV2 Baseline,83.984375,0.0
+MobileNetV2 Fine-tuned,85.9375,1.953125

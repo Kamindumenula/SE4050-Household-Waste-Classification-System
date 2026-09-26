@@ -2,11 +2,12 @@ import React from "react";
 import { CheckCircle2, AlertTriangle, Trash2, Clock, Check } from "lucide-react";
 import { WASTE_CLASSES } from "../wasteData";
 
-export default function ClassificationResult({ result, activeModel }) {
+export default function ClassificationResult({ result, activeModel, isAnalyzing }) {
   if (!result) return null;
 
   const wasteInfo = WASTE_CLASSES[result.classId] || WASTE_CLASSES["trash"];
   const confidencePercent = Math.round((result.confidence || 0.9) * 100);
+  const currentModelName = result.model_name || activeModel.name;
 
   return (
     <div
@@ -17,7 +18,9 @@ export default function ClassificationResult({ result, activeModel }) {
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
-        animation: "fadeIn 0.3s ease"
+        animation: "fadeIn 0.3s ease",
+        opacity: isAnalyzing ? 0.6 : 1,
+        transition: "opacity 0.2s ease"
       }}
     >
       <div>
@@ -77,18 +80,30 @@ export default function ClassificationResult({ result, activeModel }) {
                   {wasteInfo.recyclable ? "RECYCLABLE" : "NON-RECYCLABLE"}
                 </span>
               </div>
-              <p style={{ color: "#94a3b8", fontSize: "0.78rem" }}>
-                Model: <strong style={{ color: "#38bdf8" }}>{activeModel.name}</strong>
-              </p>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "3px" }}>
+                <span style={{ color: "#94a3b8", fontSize: "0.78rem" }}>
+                  Model: <strong style={{ color: "#38bdf8" }}>{currentModelName}</strong>
+                </span>
+                {result.latency && (
+                  <span style={{ fontSize: "0.72rem", color: "#64748b" }}>
+                    • {result.latency}
+                  </span>
+                )}
+                {result.is_trained === false && (
+                  <span style={{ fontSize: "0.68rem", color: "#f59e0b", background: "rgba(245, 158, 11, 0.15)", padding: "1px 6px", borderRadius: "8px" }}>
+                    Pending .keras
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
           <div style={{ textAlign: "right" }}>
             <div style={{ fontSize: "1.45rem", fontWeight: 800, color: "#10b981" }}>
-              {confidencePercent}%
+              {isAnalyzing ? "..." : `${confidencePercent}%`}
             </div>
             <span style={{ fontSize: "0.68rem", color: "#64748b", textTransform: "uppercase" }}>
-              Confidence
+              {isAnalyzing ? "Computing" : "Confidence"}
             </span>
           </div>
         </div>

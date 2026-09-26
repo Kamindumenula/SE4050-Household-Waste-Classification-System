@@ -34,12 +34,12 @@ export default function App() {
       .catch(() => {});
   }, []);
 
-  const handleProcessImage = async (dataUrl) => {
+  const handleProcessImage = async (dataUrl, targetModelId = activeModelId, isCompare = compareMode) => {
     setIsAnalyzing(true);
     setCurrentImagePreview(dataUrl);
 
     try {
-      if (compareMode) {
+      if (isCompare) {
         // Compare All Models Endpoint
         const res = await fetch(`${API_BASE}/predict/all`, {
           method: "POST",
@@ -57,7 +57,7 @@ export default function App() {
         const res = await fetch(`${API_BASE}/predict`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ image_data: dataUrl, model_id: activeModelId })
+          body: JSON.stringify({ image_data: dataUrl, model_id: targetModelId })
         });
         if (res.ok) {
           const data = await res.json();
@@ -78,7 +78,7 @@ export default function App() {
       const keys = Object.keys(WASTE_CLASSES);
       const chosenClass = keys[Math.floor(Math.random() * keys.length)];
 
-      if (compareMode) {
+      if (isCompare) {
         const comp = {};
         AVAILABLE_MODELS.forEach((m) => {
           comp[m.id] = {
@@ -93,16 +93,32 @@ export default function App() {
         });
         setCompareResults(comp);
       } else {
+        const targetModel = AVAILABLE_MODELS.find((m) => m.id === targetModelId) || activeModel;
         setClassificationResult({
-          model_name: activeModel.name,
+          model_name: targetModel.name,
           classId: chosenClass,
           confidence: +(0.88 + Math.random() * 0.1).toFixed(2),
-          latency: activeModel.latency,
+          latency: targetModel.latency,
           imagePreview: dataUrl
         });
       }
       setIsAnalyzing(false);
     }, 450);
+  };
+
+  const handleModelChange = (newModelId) => {
+    setActiveModelId(newModelId);
+    setCompareMode(false);
+    if (currentImagePreview) {
+      handleProcessImage(currentImagePreview, newModelId, false);
+    }
+  };
+
+  const handleToggleCompare = (nextVal) => {
+    setCompareMode(nextVal);
+    if (currentImagePreview) {
+      handleProcessImage(currentImagePreview, activeModelId, nextVal);
+    }
   };
 
   return (
@@ -161,9 +177,9 @@ export default function App() {
         {/* Model Selector Bar */}
         <ModelSelector
           activeModelId={activeModelId}
-          onSelectModel={setActiveModelId}
+          onSelectModel={handleModelChange}
           compareMode={compareMode}
-          setCompareMode={setCompareMode}
+          setCompareMode={handleToggleCompare}
           backendModels={backendModels}
         />
 
@@ -258,11 +274,13 @@ export default function App() {
               <MultiModelCompare
                 compareResults={compareResults}
                 previewImage={currentImagePreview}
+                isAnalyzing={isAnalyzing}
               />
             ) : classificationResult ? (
               <ClassificationResult
                 result={classificationResult}
                 activeModel={activeModel}
+                isAnalyzing={isAnalyzing}
               />
             ) : (
               <div

@@ -8,7 +8,7 @@ export const WASTE_CLASSES = {
     badgeBg: "rgba(37, 99, 235, 0.15)",
     badgeBorder: "rgba(37, 99, 235, 0.4)",
     recyclable: true,
-    action: "Flatten box, remove plastic tape, keep dry, deposit in Blue Bin.",
+    action: "Flatten box, remove adhesive tape, keep dry, deposit in Blue Bin.",
     decomposition: "2 months",
     tips: [
       "Remove adhesive tapes and labels.",
@@ -70,7 +70,8 @@ export const WASTE_CLASSES = {
   plastic: {
     id: "plastic",
     name: "Plastic",
-    icon: "🧴",
+    icon: "🥤",
+    iconImg: "/plastic_icon.png",
     binColor: "Orange",
     binHex: "#EA580C",
     badgeBg: "rgba(234, 88, 12, 0.15)",
@@ -79,7 +80,7 @@ export const WASTE_CLASSES = {
     action: "Empty and rinse container, check resin code (#1 PET, #2 HDPE). Orange Bin.",
     decomposition: "450 years",
     tips: [
-      "Rinse away detergent, beverage, or shampoo residue.",
+      "Rinse away beverage, detergent, or shampoo residue.",
       "PET (Code 1) and HDPE (Code 2) bottles are 100% recyclable.",
       "Squash containers to conserve bin volume."
     ]
@@ -107,32 +108,28 @@ export const AVAILABLE_MODELS = [
   {
     id: "baseline_cnn",
     name: "Custom CNN",
-    author: "Member 1 (Leader)",
-    tag: "Trained Baseline",
+    desc: "Baseline Convolutional Architecture",
     latency: "~24ms",
     isTrained: true
   },
   {
     id: "mobilenet_v2",
     name: "MobileNetV2",
-    author: "Member 2",
-    tag: "Transfer Learning",
+    desc: "Lightweight Depthwise Separable CNN",
     latency: "~18ms",
     isTrained: true
   },
   {
     id: "resnet50",
     name: "ResNet50",
-    author: "Member 3",
-    tag: "Deep Residuals + GradCAM",
+    desc: "Deep Residual Network (50 Layers)",
     latency: "~45ms",
     isTrained: false
   },
   {
     id: "efficientnet_b0",
     name: "EfficientNetB0",
-    author: "Member 4",
-    tag: "Compound Scaling",
+    desc: "Compound Scaled Architecture",
     latency: "~38ms",
     isTrained: false
   }

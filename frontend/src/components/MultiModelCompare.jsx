@@ -1,5 +1,5 @@
 import React from "react";
-import { CheckCircle2, Clock, Layers, Sparkles } from "lucide-react";
+import { CheckCircle2, Clock } from "lucide-react";
 import { WASTE_CLASSES, AVAILABLE_MODELS } from "../wasteData";
 
 export default function MultiModelCompare({ compareResults, previewImage }) {
@@ -15,17 +15,14 @@ export default function MultiModelCompare({ compareResults, previewImage }) {
   const agreeCount = votes[dominantClass] || 1;
 
   return (
-    <div className="glass-panel" style={{ padding: "22px", animation: "fadeIn 0.3s ease" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "10px" }}>
+    <div className="glass-panel" style={{ padding: "16px", animation: "fadeIn 0.3s ease", height: "100%", boxSizing: "border-box" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "8px" }}>
         <div>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <Sparkles size={18} color="#10b981" />
-            <h3 style={{ fontSize: "1.2rem", color: "#f8fafc", fontWeight: 700 }}>
-              Multi-Model Compare & Contrast Table
-            </h3>
-          </div>
-          <p style={{ color: "#94a3b8", fontSize: "0.82rem" }}>
-            Side-by-side inference across all 4 group members' models on the same waste item.
+          <h3 style={{ fontSize: "1.05rem", color: "#f8fafc", fontWeight: 700 }}>
+            Multi-Model Compare & Contrast Table
+          </h3>
+          <p style={{ color: "#94a3b8", fontSize: "0.78rem" }}>
+            Side-by-side inference across all models on the same waste item.
           </p>
         </div>
 
@@ -33,7 +30,7 @@ export default function MultiModelCompare({ compareResults, previewImage }) {
           <img
             src={previewImage}
             alt="Scanned item preview"
-            style={{ width: "48px", height: "48px", objectFit: "cover", borderRadius: "8px", border: "1px solid var(--border-color)" }}
+            style={{ width: "38px", height: "38px", objectFit: "cover", borderRadius: "6px", border: "1px solid var(--border-color)" }}
           />
         )}
       </div>
@@ -44,20 +41,26 @@ export default function MultiModelCompare({ compareResults, previewImage }) {
           background: "rgba(16, 185, 129, 0.08)",
           border: "1px solid rgba(16, 185, 129, 0.25)",
           borderRadius: "var(--radius-sm)",
-          padding: "10px 14px",
+          padding: "8px 12px",
           display: "flex",
           alignItems: "center",
           gap: "10px",
-          marginBottom: "16px",
-          fontSize: "0.85rem"
+          marginBottom: "12px",
+          fontSize: "0.82rem"
         }}
       >
-        <span style={{ fontSize: "1.4rem" }}>{dominantWaste.icon}</span>
+        <div style={{ width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          {dominantWaste.iconImg ? (
+            <img src={dominantWaste.iconImg} alt={dominantWaste.name} style={{ width: "22px", height: "22px", objectFit: "contain" }} />
+          ) : (
+            <span style={{ fontSize: "1.2rem" }}>{dominantWaste.icon}</span>
+          )}
+        </div>
         <div>
           <span style={{ color: "#f8fafc", fontWeight: 700 }}>
             Model Consensus: {dominantWaste.name} ({agreeCount}/4 Models Agree)
           </span>
-          <p style={{ color: "#94a3b8", fontSize: "0.78rem" }}>
+          <p style={{ color: "#94a3b8", fontSize: "0.75rem", margin: 0 }}>
             Recommended bin: <strong style={{ color: dominantWaste.binHex }}>{dominantWaste.binColor} Bin</strong>
           </p>
         </div>
@@ -65,15 +68,15 @@ export default function MultiModelCompare({ compareResults, previewImage }) {
 
       {/* Comparison Table */}
       <div style={{ overflowX: "auto" }}>
-        <table className="compare-table">
+        <table className="compare-table" style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr>
-              <th>Model Architecture</th>
-              <th>Predicted Class</th>
-              <th>Confidence</th>
-              <th>Disposal Bin</th>
-              <th>Latency</th>
-              <th>Status</th>
+              <th style={{ textAlign: "left", padding: "8px 10px", fontSize: "0.74rem", whiteSpace: "nowrap" }}>Model Architecture</th>
+              <th style={{ textAlign: "left", padding: "8px 10px", fontSize: "0.74rem", whiteSpace: "nowrap" }}>Predicted Class</th>
+              <th style={{ textAlign: "left", padding: "8px 10px", fontSize: "0.74rem", whiteSpace: "nowrap" }}>Confidence</th>
+              <th style={{ textAlign: "left", padding: "8px 10px", fontSize: "0.74rem", whiteSpace: "nowrap", minWidth: "110px" }}>Disposal Bin</th>
+              <th style={{ textAlign: "left", padding: "8px 10px", fontSize: "0.74rem", whiteSpace: "nowrap" }}>Latency</th>
+              <th style={{ textAlign: "left", padding: "8px 10px", fontSize: "0.74rem", whiteSpace: "nowrap" }}>Status</th>
             </tr>
           </thead>
           <tbody>
@@ -88,42 +91,49 @@ export default function MultiModelCompare({ compareResults, previewImage }) {
               const confPercent = Math.round((res.confidence || 0.88) * 100);
 
               return (
-                <tr key={model.id}>
+                <tr key={model.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                   {/* Model */}
-                  <td>
-                    <div style={{ fontWeight: 700, color: "#ffffff" }}>{model.name}</div>
-                    <div style={{ fontSize: "0.74rem", color: "#38bdf8" }}>{model.author}</div>
+                  <td style={{ padding: "8px 10px" }}>
+                    <div style={{ fontWeight: 700, color: "#ffffff", fontSize: "0.85rem" }}>{model.name}</div>
+                    <div style={{ fontSize: "0.72rem", color: "#64748b" }}>{model.desc}</div>
                   </td>
 
                   {/* Predicted Class */}
-                  <td>
+                  <td style={{ padding: "8px 10px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <span>{waste.icon}</span>
-                      <strong style={{ color: waste.binHex }}>{waste.name}</strong>
+                      {waste.iconImg ? (
+                        <img src={waste.iconImg} alt={waste.name} style={{ width: "16px", height: "16px", objectFit: "contain" }} />
+                      ) : (
+                        <span>{waste.icon}</span>
+                      )}
+                      <strong style={{ color: waste.binHex, fontSize: "0.82rem" }}>{waste.name}</strong>
                     </div>
                   </td>
 
                   {/* Confidence */}
-                  <td>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <span style={{ fontWeight: 700, minWidth: "35px" }}>{confPercent}%</span>
-                      <div style={{ width: "60px", height: "6px", background: "rgba(255,255,255,0.1)", borderRadius: "3px", overflow: "hidden" }}>
+                  <td style={{ padding: "8px 10px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <span style={{ fontWeight: 700, minWidth: "32px", fontSize: "0.82rem" }}>{confPercent}%</span>
+                      <div style={{ width: "50px", height: "5px", background: "rgba(255,255,255,0.1)", borderRadius: "3px", overflow: "hidden" }}>
                         <div style={{ width: `${confPercent}%`, height: "100%", backgroundColor: waste.binHex }} />
                       </div>
                     </div>
                   </td>
 
                   {/* Bin */}
-                  <td>
+                  <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>
                     <span
                       style={{
-                        padding: "3px 8px",
+                        display: "inline-block",
+                        whiteSpace: "nowrap",
+                        padding: "3px 10px",
                         borderRadius: "6px",
                         backgroundColor: "rgba(255, 255, 255, 0.05)",
                         border: `1px solid ${waste.binHex}`,
-                        fontSize: "0.76rem",
+                        fontSize: "0.75rem",
                         color: waste.binHex,
-                        fontWeight: 600
+                        fontWeight: 600,
+                        lineHeight: 1.2
                       }}
                     >
                       {waste.binColor} Bin
@@ -131,26 +141,26 @@ export default function MultiModelCompare({ compareResults, previewImage }) {
                   </td>
 
                   {/* Latency */}
-                  <td style={{ color: "#94a3b8", fontSize: "0.8rem" }}>
+                  <td style={{ padding: "8px 10px", color: "#94a3b8", fontSize: "0.78rem", whiteSpace: "nowrap" }}>
                     {res.latency || model.latency}
                   </td>
 
                   {/* Status */}
-                  <td>
+                  <td style={{ padding: "8px 10px" }}>
                     <span
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
-                        gap: "4px",
-                        padding: "2px 8px",
-                        borderRadius: "12px",
-                        fontSize: "0.72rem",
+                        gap: "3px",
+                        padding: "2px 7px",
+                        borderRadius: "10px",
+                        fontSize: "0.7rem",
                         fontWeight: 600,
                         backgroundColor: res.is_trained ? "rgba(16, 185, 129, 0.15)" : "rgba(234, 179, 8, 0.15)",
                         color: res.is_trained ? "#10b981" : "#eab308"
                       }}
                     >
-                      {res.is_trained ? <CheckCircle2 size={11} /> : <Clock size={11} />}
+                      {res.is_trained ? <CheckCircle2 size={10} /> : <Clock size={10} />}
                       {res.is_trained ? "Trained" : "Pending"}
                     </span>
                   </td>

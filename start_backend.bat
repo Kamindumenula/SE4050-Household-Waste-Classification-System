@@ -20,25 +20,25 @@ goto :eof
 
 :use_local_py311
 echo Starting backend with Python 3.11
-"%LOCALAPPDATA%\Programs\Python\Python311\python.exe" -m uvicorn app:app --app-dir frontend/backend --host 127.0.0.1 --port 8000 --reload
+"%LOCALAPPDATA%\Programs\Python\Python311\python.exe" -m uvicorn app:app --app-dir backend --host 127.0.0.1 --port 8000 --reload
 goto :eof
 
 :use_victus
 echo Starting backend with Python 3.11
-"C:\Users\V I C T U S\AppData\Local\Programs\Python\Python311\python.exe" -m uvicorn app:app --app-dir frontend/backend --host 127.0.0.1 --port 8000 --reload
+"C:\Users\V I C T U S\AppData\Local\Programs\Python\Python311\python.exe" -m uvicorn app:app --app-dir backend --host 127.0.0.1 --port 8000 --reload
 goto :eof
 
 :use_venv
 echo Starting backend with virtual environment
-"venv\Scripts\python.exe" -m uvicorn app:app --app-dir frontend/backend --host 127.0.0.1 --port 8000 --reload
+"venv\Scripts\python.exe" -m uvicorn app:app --app-dir backend --host 127.0.0.1 --port 8000 --reload
 goto :eof
 
 :use_py_launcher
 echo Starting backend with py launcher
-py -3.11 -m uvicorn app:app --app-dir frontend/backend --host 127.0.0.1 --port 8000 --reload
+py -3.11 -m uvicorn app:app --app-dir backend --host 127.0.0.1 --port 8000 --reload
 goto :eof
 
 :use_python
 echo Starting backend with system python
-python -m uvicorn app:app --app-dir frontend/backend --host 127.0.0.1 --port 8000 --reload
+python -m uvicorn app:app --app-dir backend --host 127.0.0.1 --port 8000 --reload
 goto :eof

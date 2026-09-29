@@ -40,25 +40,25 @@ MODEL_CONFIGS = {
     "baseline_cnn": {
         "name": "Custom CNN",
         "author": "Baseline Architecture",
-        "files": ["../../models/baseline_cnn.keras"],
+        "files": ["../models/baseline_cnn.keras", "../../models/baseline_cnn.keras", "models/baseline_cnn.keras"],
         "tag": "Custom Baseline"
     },
     "mobilenet_v2": {
         "name": "MobileNetV2",
         "author": "Transfer Learning",
-        "files": ["../../models/mobilenetv2_final.keras", "../../models/mobilenetv2.keras"],
+        "files": ["../models/mobilenetv2_final.keras", "../models/mobilenetv2.keras", "../../models/mobilenetv2_final.keras", "models/mobilenetv2_final.keras"],
         "tag": "Transfer Learning"
     },
     "resnet50": {
         "name": "ResNet50",
         "author": "Deep Residuals",
-        "files": ["../../models/IT23293908ResNet50.keras", "../../models/resnet50.keras", "../../models/resnet50_final.keras"],
+        "files": ["../models/IT23293908ResNet50.keras", "../models/resnet50.keras", "../../models/IT23293908ResNet50.keras", "models/IT23293908ResNet50.keras"],
         "tag": "Deep Residuals"
     },
     "efficientnet_b0": {
         "name": "EfficientNetB0",
         "author": "Compound Scaling",
-        "files": ["../../models/efficientnetb0_final.keras", "../../models/efficientnet_b0.keras"],
+        "files": ["../models/efficientnetb0_final.keras", "../models/efficientnet_b0.keras", "../../models/efficientnetb0_final.keras", "models/efficientnetb0_final.keras"],
         "tag": "High Efficiency"
     }
 }

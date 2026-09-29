@@ -72,7 +72,7 @@ start_backend.bat
 ```
 *Or manually via command line:*
 ```bash
-cd frontend/backend
+cd backend
 python -m uvicorn app:app --host 127.0.0.1 --port 8000 --reload
 ```
 The FastAPI server will run at `http://127.0.0.1:8000` (API docs at `http://127.0.0.1:8000/docs`).

@@ -1,0 +1,5 @@
+Model Name,Architecture,Parameters,Size (MB),Accuracy (%),Precision (%),Recall (%),F1-Score (%),Avg Latency (ms)
+Custom CNN,Custom Baseline,"424,006",4.9 MB,74.3,95.36,74.3,83.52,19.78
+MobileNetV2,Transfer Learning,"2,265,670",20.8 MB,76.71,92.83,76.71,83.35,20.66
+ResNet50,Deep Residuals,"23,850,758",93.6 MB,87.15,98.29,87.15,92.28,26.86
+EfficientNetB0,Compound Scaling,"4,057,257",16.3 MB,89.56,97.81,89.56,93.5,141.81

@@ -1,39 +1,40 @@
 @echo off
 echo ========================================================
-echo Starting EcoSort AI Backend with Native TensorFlow...
+echo Starting EcoSort AI Backend with Native TensorFlow
 echo ========================================================
 
-:: 1. Check if virtual environment venv exists in root
+REM 1. Check if a virtual environment exists
 if exist "venv\Scripts\python.exe" (
     echo Using project virtual environment (venv)...
     "venv\Scripts\python.exe" -m uvicorn app:app --app-dir frontend/backend --host 127.0.0.1 --port 8000 --reload
     goto end
 )
 
-:: 2. Check if py launcher has Python 3.11 installed
+REM 2. Check if py launcher has Python 3.11
 py -3.11 --version >nul 2>&1
-if %errorlevel% == 0 (
+if not errorlevel 1 (
     echo Using Python 3.11 via py launcher...
     py -3.11 -m uvicorn app:app --app-dir frontend/backend --host 127.0.0.1 --port 8000 --reload
     goto end
 )
 
-:: 3. Check if standard python command works
-python --version >nul 2>&1
-if %errorlevel% == 0 (
-    echo Using default system python...
+REM 3. Check if standard Windows LocalAppData Python 3.11 exists (generic for any user)
+if exist "%LOCALAPPDATA%\Programs\Python\Python311\python.exe" (
+    echo Using Python 3.11 from local app data...
+    "%LOCALAPPDATA%\Programs\Python\Python311\python.exe" -m uvicorn app:app --app-dir frontend/backend --host 127.0.0.1 --port 8000 --reload
+    goto end
+)
+
+REM 4. Check if default python command has uvicorn
+python -c "import uvicorn" >nul 2>&1
+if not errorlevel 1 (
+    echo Using system python...
     python -m uvicorn app:app --app-dir frontend/backend --host 127.0.0.1 --port 8000 --reload
     goto end
 )
 
-:: 4. Fallback to specific user installation if present
-if exist "C:\Users\V I C T U S\AppData\Local\Programs\Python\Python311\python.exe" (
-    "C:\Users\V I C T U S\AppData\Local\Programs\Python\Python311\python.exe" -m uvicorn app:app --app-dir frontend/backend --host 127.0.0.1 --port 8000 --reload
-    goto end
-)
-
-echo [ERROR] No suitable Python installation found.
-echo Please install Python 3.10 or 3.11 and ensure it is added to your PATH.
+echo [ERROR] No suitable Python installation with uvicorn was found.
+echo Please run: pip install -r requirements.txt
 pause
 
 :end

@@ -4,7 +4,7 @@ import time
 import base64
 import numpy as np
 from PIL import Image
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 
 # Suppress verbose TensorFlow C++ logging
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
@@ -14,7 +14,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-app = FastAPI(title="EcoSort AI - Household Waste Classification API (TensorFlow Native)")
+app = FastAPI(title="EcoSort AI - Household Waste Classification API (All 4 Models Native)")
 
 # Enable CORS for React/Vite development server
 app.add_middleware(
@@ -40,25 +40,25 @@ MODEL_CONFIGS = {
     "baseline_cnn": {
         "name": "Custom CNN",
         "author": "Baseline Architecture",
-        "file": "../../models/baseline_cnn.keras",
+        "files": ["../../models/baseline_cnn.keras"],
         "tag": "Custom Baseline"
     },
     "mobilenet_v2": {
         "name": "MobileNetV2",
         "author": "Transfer Learning",
-        "file": "../../models/mobilenetv2_final.keras",
+        "files": ["../../models/mobilenetv2_final.keras", "../../models/mobilenetv2.keras"],
         "tag": "Transfer Learning"
     },
     "resnet50": {
         "name": "ResNet50",
         "author": "Deep Residuals",
-        "file": "../../models/resnet50.keras",
-        "tag": "Deep Residuals + GradCAM"
+        "files": ["../../models/IT23293908ResNet50.keras", "../../models/resnet50.keras", "../../models/resnet50_final.keras"],
+        "tag": "Deep Residuals"
     },
     "efficientnet_b0": {
         "name": "EfficientNetB0",
         "author": "Compound Scaling",
-        "file": "../../models/efficientnet_b0.keras",
+        "files": ["../../models/efficientnetb0_final.keras", "../../models/efficientnet_b0.keras"],
         "tag": "High Efficiency"
     }
 }
@@ -72,20 +72,28 @@ def get_model_abs_path(rel_path: str) -> str:
 def check_model_on_disk(rel_path: str) -> bool:
     return os.path.exists(get_model_abs_path(rel_path))
 
+def get_active_model_file(model_id: str) -> Optional[str]:
+    cfg = MODEL_CONFIGS.get(model_id)
+    if not cfg:
+        return None
+    for f in cfg.get("files", []):
+        if check_model_on_disk(f):
+            return f
+    return None
+
+def is_model_trained(model_id: str) -> bool:
+    return get_active_model_file(model_id) is not None
+
 def get_or_load_tf_model(model_id: str) -> Optional[tf.keras.Model]:
     """Loads and caches TensorFlow model from disk."""
     if model_id in loaded_models:
         return loaded_models[model_id]
     
-    if model_id not in MODEL_CONFIGS:
+    file_rel = get_active_model_file(model_id)
+    if not file_rel:
         return None
         
-    file_rel = MODEL_CONFIGS[model_id]["file"]
     abs_path = get_model_abs_path(file_rel)
-    
-    if not os.path.exists(abs_path):
-        return None
-        
     try:
         print(f"[INFO] Loading TensorFlow model: {model_id} from {abs_path}...")
         model = tf.keras.models.load_model(abs_path)
@@ -99,9 +107,8 @@ def get_or_load_tf_model(model_id: str) -> Optional[tf.keras.Model]:
 def preprocess_image_for_model(img_arr: np.ndarray, model_id: str) -> np.ndarray:
     """
     Preprocesses a 224x224 RGB image array for the specific model architecture.
-    CRITICAL: Both Custom CNN (with built-in Rescaling(1./255)) and MobileNetV2
-    (with built-in preprocess_input layer) already incorporate their normalization
-    inside the trained Keras model graph. They must be supplied raw [0, 255] float32 pixels.
+    All 4 models (Custom CNN, MobileNetV2, ResNet50, EfficientNetB0) were trained
+    with raw image_dataset_from_directory [0.0, 255.0] float32 inputs.
     """
     batch = np.expand_dims(img_arr.astype(np.float32), axis=0)
     return batch
@@ -130,13 +137,15 @@ def health_check():
 def get_models_status():
     status = {}
     for m_id, cfg in MODEL_CONFIGS.items():
-        exists = check_model_on_disk(cfg["file"])
+        trained = is_model_trained(m_id)
+        file_path = get_active_model_file(m_id)
         status[m_id] = {
             "name": cfg["name"],
             "author": cfg["author"],
             "tag": cfg["tag"],
-            "trained": exists,
-            "status": "Ready (TensorFlow model detected)" if exists else "Pending training"
+            "trained": trained,
+            "status": "Ready (TensorFlow model detected)" if trained else "Pending training",
+            "file": file_path
         }
     return status
 
@@ -148,8 +157,7 @@ def predict_single(req: PredictRequest):
         img_arr = np.array(img, dtype=np.float32)
 
         m_id = req.model_id if req.model_id in MODEL_CONFIGS else "baseline_cnn"
-        is_trained = check_model_on_disk(MODEL_CONFIGS[m_id]["file"])
-        model = get_or_load_tf_model(m_id) if is_trained else None
+        model = get_or_load_tf_model(m_id)
 
         if model is not None:
             processed_input = preprocess_image_for_model(img_arr, m_id)
@@ -158,36 +166,18 @@ def predict_single(req: PredictRequest):
             confidence = float(round(float(preds[pred_idx]), 4))
             latency_ms = round((time.time() - start_time) * 1000, 1)
         else:
-            # For models pending trained weights: derive from trained model with architecture-specific calibration
-            base_model = get_or_load_tf_model("mobilenet_v2") or get_or_load_tf_model("baseline_cnn")
-            if base_model is not None:
-                preds = base_model.predict(preprocess_image_for_model(img_arr, "mobilenet_v2"), verbose=0)[0]
-                pred_idx = int(np.argmax(preds))
-                base_conf = float(preds[pred_idx])
-
-                if m_id == "resnet50":
-                    # Deep residual network characteristics
-                    confidence = float(round(min(0.975, max(0.65, base_conf + 0.038)), 4))
-                    latency_ms = round(42.5 + float(img_arr[0, 0, 0] % 8), 1)
-                elif m_id == "efficientnet_b0":
-                    # Compound scaling architecture characteristics
-                    confidence = float(round(min(0.985, max(0.68, base_conf + 0.056)), 4))
-                    latency_ms = round(34.2 + float(img_arr[0, 0, 1] % 7), 1)
-                else:
-                    confidence = float(round(base_conf, 4))
-                    latency_ms = round((time.time() - start_time) * 1000, 1)
-            else:
-                mean_rgb = np.mean(img_arr, axis=(0, 1))
-                pred_idx = int(sum(mean_rgb) * 100) % len(CLASSES)
-                confidence = 0.85
-                latency_ms = 25.0
+            # Fallback if model not loaded
+            mean_rgb = np.mean(img_arr, axis=(0, 1))
+            pred_idx = int(sum(mean_rgb) * 100) % len(CLASSES)
+            confidence = 0.85
+            latency_ms = 25.0
 
         chosen_class = CLASSES[pred_idx]
 
         return {
             "model_id": m_id,
             "model_name": MODEL_CONFIGS[m_id]["name"],
-            "is_trained": is_trained and (model is not None),
+            "is_trained": model is not None,
             "classId": chosen_class,
             "confidence": confidence,
             "latency": f"{latency_ms}ms",
@@ -204,52 +194,8 @@ def predict_compare_all(req: PredictRequest):
         img_arr = np.array(img, dtype=np.float32)
         
         comparison = {}
-        consensus_class_idx = None
-        consensus_confidence = 0.88
-
-        # 1. First run all trained models through native TensorFlow
-        for m_id in ["baseline_cnn", "mobilenet_v2"]:
-            cfg = MODEL_CONFIGS[m_id]
-            is_trained = check_model_on_disk(cfg["file"])
-            model = get_or_load_tf_model(m_id) if is_trained else None
-
-            if model is not None:
-                m_start = time.time()
-                processed_input = preprocess_image_for_model(img_arr, m_id)
-                preds = model.predict(processed_input, verbose=0)[0]
-                pred_idx = int(np.argmax(preds))
-                conf = float(round(float(preds[pred_idx]), 4))
-                m_lat = f"{round((time.time() - m_start) * 1000, 1)}ms"
-                c_name = CLASSES[pred_idx]
-                
-                # Favor MobileNetV2 or highest confidence as consensus
-                if m_id == "mobilenet_v2" or consensus_class_idx is None:
-                    consensus_class_idx = pred_idx
-                    consensus_confidence = conf
-
-                comparison[m_id] = {
-                    "name": cfg["name"],
-                    "author": cfg["author"],
-                    "classId": c_name,
-                    "confidence": conf,
-                    "is_trained": True,
-                    "status": "Trained (TensorFlow)",
-                    "bin": CLASS_GUIDELINES[c_name]["bin"],
-                    "binColor": CLASS_GUIDELINES[c_name]["color"],
-                    "recyclable": CLASS_GUIDELINES[c_name]["recyclable"],
-                    "latency": m_lat
-                }
-
-        # If neither model was loaded, fallback to dominant color heuristic
-        if consensus_class_idx is None:
-            mean_rgb = np.mean(img_arr, axis=(0, 1))
-            consensus_class_idx = int(sum(mean_rgb) * 100) % len(CLASSES)
-
-        # 2. Run remaining models (or preview pending weights)
-        for idx, m_id in enumerate(["resnet50", "efficientnet_b0"]):
-            cfg = MODEL_CONFIGS[m_id]
-            is_trained = check_model_on_disk(cfg["file"])
-            model = get_or_load_tf_model(m_id) if is_trained else None
+        for m_id, cfg in MODEL_CONFIGS.items():
+            model = get_or_load_tf_model(m_id)
 
             if model is not None:
                 m_start = time.time()
@@ -259,20 +205,21 @@ def predict_compare_all(req: PredictRequest):
                 conf = float(round(float(preds[pred_idx]), 4))
                 m_lat = f"{round((time.time() - m_start) * 1000, 1)}ms"
                 status_str = "Trained (TensorFlow)"
+                c_name = CLASSES[pred_idx]
             else:
-                # Aligned prediction matching the trained consensus
-                pred_idx = consensus_class_idx
-                conf = float(round(min(0.96, consensus_confidence + (0.02 if m_id == 'efficientnet_b0' else -0.01)), 4))
-                m_lat = f"{round(24 + idx * 8, 1)}ms"
-                status_str = "Pending .keras"
+                mean_rgb = np.mean(img_arr, axis=(0, 1))
+                pred_idx = int(sum(mean_rgb) * 100) % len(CLASSES)
+                conf = 0.85
+                m_lat = "25.0ms"
+                status_str = "Pending weights"
+                c_name = CLASSES[pred_idx]
 
-            c_name = CLASSES[pred_idx]
             comparison[m_id] = {
                 "name": cfg["name"],
                 "author": cfg["author"],
                 "classId": c_name,
                 "confidence": conf,
-                "is_trained": is_trained and (model is not None),
+                "is_trained": model is not None,
                 "status": status_str,
                 "bin": CLASS_GUIDELINES[c_name]["bin"],
                 "binColor": CLASS_GUIDELINES[c_name]["color"],

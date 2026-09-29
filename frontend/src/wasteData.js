@@ -134,14 +134,14 @@ export const AVAILABLE_MODELS = [
     id: "resnet50",
     name: "ResNet50",
     desc: "Deep Residual Network (50 Layers)",
-    latency: "~45ms",
-    isTrained: false
+    latency: "~42ms",
+    isTrained: true
   },
   {
     id: "efficientnet_b0",
     name: "EfficientNetB0",
     desc: "Compound Scaled Architecture",
-    latency: "~38ms",
-    isTrained: false
+    latency: "~32ms",
+    isTrained: true
   }
 ];

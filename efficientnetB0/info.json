@@ -1,0 +1,8 @@
+{
+  "total_params": 4057257,
+  "trainable_params": 1491046,
+  "train_time_sec": 174.9,
+  "epochs_trained": 20,
+  "inference_ms_per_image": 55.644,
+  "hardware": "GPU"
+}

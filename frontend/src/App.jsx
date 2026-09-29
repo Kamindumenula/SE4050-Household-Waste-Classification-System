@@ -5,6 +5,7 @@ import ImageUploader from "./components/ImageUploader";
 import ModelSelector from "./components/ModelSelector";
 import ClassificationResult from "./components/ClassificationResult";
 import MultiModelCompare from "./components/MultiModelCompare";
+import SkeletonLoader from "./components/SkeletonLoader";
 import { AVAILABLE_MODELS, WASTE_CLASSES } from "./wasteData";
 
 const API_BASE = "http://localhost:8000";
@@ -270,17 +271,60 @@ export default function App() {
               boxSizing: "border-box"
             }}
           >
-            {compareMode ? (
-              <MultiModelCompare
-                compareResults={compareResults}
+            {isAnalyzing ? (
+              <SkeletonLoader
+                mode={compareMode ? "compare" : "single"}
                 previewImage={currentImagePreview}
-                isAnalyzing={isAnalyzing}
+                activeModel={activeModel}
               />
+            ) : compareMode ? (
+              compareResults ? (
+                <MultiModelCompare
+                  compareResults={compareResults}
+                  previewImage={currentImagePreview}
+                />
+              ) : (
+                <div
+                  className="glass-panel"
+                  style={{
+                    padding: "36px 20px",
+                    textAlign: "center",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: "100%",
+                    boxSizing: "border-box"
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "56px",
+                      height: "56px",
+                      borderRadius: "50%",
+                      background: "rgba(16, 185, 129, 0.08)",
+                      border: "1px solid rgba(16, 185, 129, 0.2)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "1.6rem",
+                      marginBottom: "12px"
+                    }}
+                  >
+                    <Layers size={26} color="#10b981" />
+                  </div>
+                  <h3 style={{ fontSize: "1.08rem", fontWeight: 700, color: "#f8fafc", marginBottom: "6px" }}>
+                    Multi-Model Benchmark Ready
+                  </h3>
+                  <p style={{ color: "#94a3b8", fontSize: "0.82rem", maxWidth: "330px", lineHeight: 1.4 }}>
+                    Scan with your camera or select a photo to evaluate Custom CNN, MobileNetV2, ResNet50, and EfficientNetB0 side-by-side.
+                  </p>
+                </div>
+              )
             ) : classificationResult ? (
               <ClassificationResult
                 result={classificationResult}
                 activeModel={activeModel}
-                isAnalyzing={isAnalyzing}
               />
             ) : (
               <div
